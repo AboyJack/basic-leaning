@@ -27,11 +27,29 @@ module.exports = {
     })
   ],
   module: { // 模块
-    rules: [ // 规则 css-loader 
+    rules: [ // 规则 css-loader 负责解析 @import 这种语法
+      // style-loader 把css插入到head的标签中 loader的特点 希望单一
+      // loader 的用法 字符串只是用的一个loader 多个loader需要用数组[] loader的顺序默认名是从右向左执行 从下到上执行
+      // loader 还可以写成对象方式 单个loader里配置其他参数
       {
         test: /\.css$/,
-        use: []
-      }
+        use: [{
+          loader: 'style-loader',
+          options: {
+            // insertAt: 'top' // 引用到最上面
+          }
+        }, 'css-loader']
+      },
+      // 处理 less 文件  sass stylus node-sass sass-loader
+      {
+        test: /\.less$/,
+        use: [{
+            loader: 'style-loader'
+          },
+          'css-loader',
+          'less-loader' // less -> css
+        ]
+      },
     ]
   }
 }

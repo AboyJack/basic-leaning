@@ -1,2 +1,5 @@
 let str = require('./a.js');
-console.log(str);
+document.write(str);
+
+require('./index.css');
+require('./index.less');
