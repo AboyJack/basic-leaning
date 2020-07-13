@@ -12,7 +12,7 @@
     ├── vue // vue.js
     ├── react // react.js
     ├── webpack // webpack
-    ├── TS // TypeScript
+    ├── typescript // TypeScript
     ├── Node // node.js
     ├── Monitor // 前端监控
     ├── Database // 数据库
