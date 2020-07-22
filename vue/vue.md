@@ -486,7 +486,7 @@ export default {
 <br>
 渲染完成之后 父组件`mounted`
 
-#### 8. 动画
+#### 9. 动画
 Vue中的动画  （当`dom`显示或隐藏时，vue可以管理动画）<br>
 
 `v-for` / `v-if` / `v-show` 可以导致动画生效
@@ -622,11 +622,6 @@ Vue中的动画  （当`dom`显示或隐藏时，vue可以管理动画）<br>
   }
 </script>
 <style scoped>
-  html, body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-  }
   li {
     display: inline-block;
   }
@@ -647,6 +642,47 @@ Vue中的动画  （当`dom`显示或隐藏时，vue可以管理动画）<br>
     width: 100px;
     height: 100px;
     transition: 1s linear;
+  }
+</style>
+```
+
+实现一个筛选功能动画效果：
+
+```html
+<template>
+  <div>
+    <input type="text" v-model="content">
+    <transition-group enter-active-class="animated bounceInLeft"
+                      leave-active-class="animated bounceOutRight">
+        <li v-for="i in list" :key="i">{{i}}</li>
+    </transition-group>
+  </div>
+</template>
+<script>
+  export default {
+    data () {
+      return {
+        isShow: false, // 默认控制动画的属性
+        content: '',
+        list: ['abc', 'bcd', 'def', 'xxx', 'yyy']
+      }
+    },
+    computed: {
+      computedArr () {
+        return this.list.filter(el => el.includes(this.content))
+      }
+    },
+    methods: {
+      
+    }
+  }
+</script>
+<style scoped>
+  @import "https://cdn.jsdelivr.net/npm/animate.css@3.5";
+  li {
+    color: #fff;
+    line-height: 20px;
+    width: 100px;
   }
 </style>
 ```
