@@ -18,8 +18,17 @@ mvvm 特点双向数据绑定 model（js中的数据），view（前端页面）
 mvvm模式 不需要手动去操作dom的
 
 ### 5. 安装vue
-`npm install vue`
+- `npm install vue`
 
+-  安装 `vue-cli`
+```bash
+npm install @vue/cli -g
+```
+-  快速原型工具 （可以帮我们直接解析`.vue` 文件，方便写一些demo）
+```bash
+npm install @vue/cli-service-global -g
+vue serve
+```
 #### 1. vue中响应式特点
   **1. 响应式规则**<br>
   会递归去循环vue中的属性（浪费性能的地方），会给每个属性都增加`getter`和`setter`，当属性变化时会更新视图。<br>
@@ -489,7 +498,7 @@ export default {
 #### 9. 动画
 Vue中的动画  （当`dom`显示或隐藏时，vue可以管理动画）<br>
 
-`v-for` / `v-if` / `v-show` 可以导致动画生效
+`v-for` / `v-if` / `v-show` 可以产生动画生效
 
 ```html
 <template>
@@ -686,3 +695,103 @@ Vue中的动画  （当`dom`显示或隐藏时，vue可以管理动画）<br>
   }
 </style>
 ```
+
+#### 10. 组件的声明
+
+- 什么是组件？为什么要用组件？
+> 组件其实就是一个对象， 我们可以抽离成组件实现复用效果，可以方便维护代码，组件级别更新，给每个组件都添加个watcher
+<br>组件能抽离就尽量抽离，可以减少更新
+
+组件有生命周期，组件也分为两种，全局组件和局部组件
+
+全局组件
+
+组件的实例化过程 会通过当前传入的对象，创建出一个实例
+
+```js
+Vue.component('my-component', {
+  template: '<div>{{msg}}</div>',
+  data () { // data必须是一个函数，为了防止组件之间的数据相互引用
+    return {msg: 'hello'}
+  }
+})
+```
+组件化是将当前相关的 `html` `js` `css` 放在一起
+
+还可以构建一个子类，手动挂载组件
+```js
+let Ctor = Vue.extend({
+  template: '<div>{{msg}}</div>',
+  data () {
+    return {msg: 'hello'}
+  }
+})
+// Ctor 返回的是一个子构造器 父类的构造函数
+// 手动挂载组件
+document.body.appendChild(new Ctor().$mont().$el)
+// Vue.component 会调用 Vue.extend 这个方法
+Vue.component('my-component', Ctor)
+```
+
+- 组件间的通信
+
+- 数据通信的关系
+  - 父子组件通信
+  
+父组件 parent.vue
+```html
+<template>
+ 父组件：<br>
+ <child :change-count="changeCount"></child>
+</template>
+<script>
+import child from './child'
+export default {
+  name: 'parent',
+  components: {child},
+  data () {
+    return { count: 100 }
+  },
+  methods: {
+    changeCount (val) {
+      this.count += val
+    }
+  }
+}
+</script>
+```
+  子组件 child.vue
+```html
+<template>
+ 子组件：<br>
+ {{count}}
+ <button @click="changeCount(500)">更改父组件数量</button>
+</template>
+<script>
+export default {
+  name: 'child',
+  // 子组件不能修改父组件的数据，因为属性不是响应式的
+  // 子组件可以调用父组件中定义的函数，将需要修改的值传递给父组件，典型的单项数据流
+  props: {
+    count: {
+      type: Number,
+      default: 0
+    },
+    'change-count': {
+      type: Function,
+      default: () => {}
+    }
+  },
+  data () {
+    return {
+      
+    }
+  }
+}
+</script>
+```
+
+  - 平级组件通信
+
+
+  - 跨组件通信
