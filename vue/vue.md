@@ -733,7 +733,12 @@ document.body.appendChild(new Ctor().$mont().$el)
 Vue.component('my-component', Ctor)
 ```
 
-- 组件间的通信
+#### 11. 组件间的通信
+- props + $emit / 同步数据 v-model/ .sync
+- provide / inject (会造成单项数据流混乱 自己实现工具库的话 需要采用这种方式)
+- $parent / $children 可以直接触发父组件或子组件的事件
+- 
+
 
 - 数据通信的关系
   - 父子组件通信
@@ -741,8 +746,30 @@ Vue.component('my-component', Ctor)
 父组件 parent.vue
 ```html
 <template>
- 父组件：<br>
- <child :change-count="changeCount"></child>
+  父组件：<br>
+  <!-- 方式一 -->
+  <!-- <child :count="count" :change-count="changeCount"></child> -->
+
+  <!-- 方式二  给子组件添加事件-->
+  <!-- 相当于 child.$on('click', changeCount) -->
+  <!-- <child :count="count" @change-count="changeCount"></child> -->
+  <!-- 如果使用.native修饰符 会把事件绑定给当前组件的最外层元素上 -->
+
+  <!-- 方式三 -->
+  <!-- <child :value="count" @input="val => count = val"></child> -->
+  <!-- 上面写法可以替换成v-model模式 value + input的语法糖 -->
+  <!-- <child v-model="count"></child> -->
+
+  <!-- 如何自定义 v-model -->
+  <!-- <child v-model="count"></child> -->
+
+  <!-- .sync语法糖 -->
+  <child :count="count" @update:count="val => count = val"></child>
+  <!-- 等同于 -->
+  <child :count.sync="count"></child>
+
+  <!-- 如果父子组件想同步数据 可以使用传递属性 + 自定义事件的方式 或 语法糖（v-model / .sync） 将父组件之间传递给子组件调用 -->
+
 </template>
 <script>
 import child from './child'
@@ -754,6 +781,8 @@ export default {
   },
   methods: {
     changeCount (val) {
+      // methods 中的函数已经被bind过了 不能再更改
+      console.log(this.$options.name)
       this.count += val
     }
   }
@@ -763,35 +792,140 @@ export default {
   子组件 child.vue
 ```html
 <template>
- 子组件：<br>
- {{count}}
- <button @click="changeCount(500)">更改父组件数量</button>
+  子组件：<br>
+  {{count}}
+  <!-- 方式一 -->
+  <!-- <button @click="changeCount(500)">更改父组件数量</button> -->
+
+  <!-- 方式二 -->
+  <!-- <button @click="$emit('change-count', 500)">更改父组件数量</button> -->
+
+  <!-- 方式三 -->
+  <!-- <button @click="$emit('input', 300)">更改父组件数量</button> -->
+
+  <!-- 自定义 v-model-->
+  <!-- <button @click="$emit('change', 300)">更改父组件数量</button> -->
+  <!-- .sync语法糖 -->
+  <!-- <button @click="$emit('update:count', 300)">更改父组件数量</button>  -->
+
 </template>
 <script>
 export default {
   name: 'child',
+  model: {
+    prop: 'money', // 默认是value属性
+    event: 'change' // 默认事件名是input
+  },
   // 子组件不能修改父组件的数据，因为属性不是响应式的
   // 子组件可以调用父组件中定义的函数，将需要修改的值传递给父组件，典型的单项数据流
   props: {
+    money: {
+      type: Number
+    },
+    value: {
+      type: Number,
+      default: 0
+    },
     count: {
       type: Number,
       default: 0
     },
-    'change-count': {
-      type: Function,
-      default: () => {}
-    }
+    // 'change-count': {
+    //   type: Function,
+    //   default: () => {}
+    // }
+  }
+}
+</script>
+```
+
+  - 跨组件通信
+
+父组件 parent.vue
+```html
+<template>
+  父组件：{{count}}<br>
+  <child @change-count="changeCount" @paly="paly"></child>
+</template>
+<script>
+// import child from './child'
+export default {
+  name: 'parent',
+  provide () { // 提供者 上下文
+    return {parent: this} // 直接将这个组件暴露出去
   },
+  // components: {child},
   data () {
-    return {
-      
+    return { count: 100 }
+  },
+  methods: {
+    changeCount (val) {
+      console.log('change parent')
+    },
+    paly () {
+      console.log()
     }
   }
 }
 </script>
 ```
 
+子组件 `child.vue`
+
+```html
+<template>
+  子组件： {{count}}<br>
+  <grand-child @click="$dispatch('play', 'parent', 'ball')"></grand-child>
+</template>
+<script>
+import grandChild from './grand-child'
+export default {
+  name: 'child',
+  components: {grandChild},
+  props: {
+    count: {}
+  }
+}
+</script>
+```
+
+二级组件 `grand-child.vue`
+```html
+<template>
+  二级组件：{{parent.count}} <br>
+  <button @click="$parent.$emit('change-count')">触发child的事件</button>
+</template>
+<script>
+export default {
+  name: 'grand-child',
+  inject: ['parent']
+  props: {
+    count: {}
+  }
+}
+</script>
+```
+
+自己封装一个派发的功能 去派发指定的组件上
+main.js
+```js
+import Vue from 'vue'
+
+// 向上派发事件 只要组件上绑定过此事件就会触发
+Vue.prototype.$dispatch = function (eventName, componentName, value) {
+  let parent = this.$parent
+  while (parent) {
+    // 触发指定组件事件 而不是全部向上一直查找
+    if (parent.$options.name === componentName) {
+      parent.$emit(eventName, value) // 没有绑定触发 不会又任何影响
+      return
+    }
+    parent = parent.$parent
+  }
+}
+```
   - 平级组件通信
 
 
-  - 跨组件通信
+
+注意： 在子组件里不要直接修改父组件的数据
