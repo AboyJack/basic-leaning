@@ -12,7 +12,6 @@
 </template>
 
 <script>
-
   export default {
     name: 'App',
     data () {
@@ -25,6 +24,10 @@
           {
             label: 'vue中jsx的语法',
             router: '/vue-jsx'
+          },
+          {
+            label: 'vue表单组件',
+            router: '/vue-form'
           }
         ]
       }
