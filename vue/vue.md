@@ -734,42 +734,47 @@ Vue.component('my-component', Ctor)
 ```
 
 #### 11. 组件间的通信
-- props + $emit / 同步数据 v-model/ .sync
-- provide / inject (会造成单项数据流混乱 自己实现工具库的话 需要采用这种方式)
-- $parent / $children 可以直接触发父组件或子组件的事件
-- 
+- `props` + `$emit` / 同步数据 `v-model`/ `.sync`
+- `provide` / `inject` (会造成单项数据流混乱 自己实现工具库的话 需要采用这种方式)
+- `$parent` / `$children` 可以直接触发父组件或子组件的事件 (尽量不要使用，因为你不知道父级和子级，防止代码不好维护)
+- `$broadcast` `$dispatch`
+- `$attrs` `$listeners` 表示的是所有的属性和方法的合集 可以使用`v-bind` 或者 `v-on` 传递
+- `ref` 主要是操作dom元素 给组件添加ref，可以获取组件的实例 或 dom
+- `eventBus` 事件车 可以任意组件间通信 通过发布订阅模式，在任何组件中订阅，之后在其他组件中触发事件 （适合一些小规模的通信，大规模会导致事件难以维护）
+- `vuex` 
 
 
 - 数据通信的关系
-  - 父子组件通信
+1. 父子组件通信
   
 父组件 parent.vue
 ```html
 <template>
-  父组件：<br>
-  <!-- 方式一 -->
-  <!-- <child :count="count" :change-count="changeCount"></child> -->
+  <div>
+    父组件：<br>
+    <!-- 方式一 -->
+    <!-- <child :count="count" :change-count="changeCount"></child> -->
 
-  <!-- 方式二  给子组件添加事件-->
-  <!-- 相当于 child.$on('click', changeCount) -->
-  <!-- <child :count="count" @change-count="changeCount"></child> -->
-  <!-- 如果使用.native修饰符 会把事件绑定给当前组件的最外层元素上 -->
+    <!-- 方式二  给子组件添加事件-->
+    <!-- 相当于 child.$on('click', changeCount) -->
+    <!-- <child :count="count" @change-count="changeCount"></child> -->
+    <!-- 如果使用.native修饰符 会把事件绑定给当前组件的最外层元素上 -->
 
-  <!-- 方式三 -->
-  <!-- <child :value="count" @input="val => count = val"></child> -->
-  <!-- 上面写法可以替换成v-model模式 value + input的语法糖 -->
-  <!-- <child v-model="count"></child> -->
+    <!-- 方式三 -->
+    <!-- <child :value="count" @input="val => count = val"></child> -->
+    <!-- 上面写法可以替换成v-model模式 value + input的语法糖 -->
+    <!-- <child v-model="count"></child> -->
 
-  <!-- 如何自定义 v-model -->
-  <!-- <child v-model="count"></child> -->
+    <!-- 如何自定义 v-model -->
+    <!-- <child v-model="count"></child> -->
 
-  <!-- .sync语法糖 -->
-  <child :count="count" @update:count="val => count = val"></child>
-  <!-- 等同于 -->
-  <child :count.sync="count"></child>
+    <!-- .sync语法糖 -->
+    <child :count="count" @update:count="val => count = val"></child>
+    <!-- 等同于 -->
+    <child :count.sync="count"></child>
 
-  <!-- 如果父子组件想同步数据 可以使用传递属性 + 自定义事件的方式 或 语法糖（v-model / .sync） 将父组件之间传递给子组件调用 -->
-
+    <!-- 如果父子组件想同步数据 可以使用传递属性 + 自定义事件的方式 或 语法糖（v-model / .sync） 将父组件之间传递给子组件调用 -->
+  </div>
 </template>
 <script>
 import child from './child'
@@ -839,13 +844,42 @@ export default {
 </script>
 ```
 
-  - 跨组件通信
+  2. 跨组件通信
+App.vue
+```html
+<template>
+  <div>
+    <parent @click="$broadcast('eat', 'grand-child', '早餐')">触发grand-child组件的eat方法</parent>
+  </div>
+</template>
+<script>
+import parent from './component/parent'
+export default {
+  components: {parent},
+  data () {
+    return { msg: 'hello' }
+  },
+  methods: {
+    changeCount (val) {
+      console.log('change parent')
+    },
+    paly () {
+      console.log()
+    }
+  }
+}
+</script>
+```
+
+
 
 父组件 parent.vue
 ```html
 <template>
-  父组件：{{count}}<br>
-  <child @change-count="changeCount" @paly="paly"></child>
+  <div>
+    父组件：{{count}}<br>
+    <child @change-count="changeCount" @paly="paly"></child>
+  </div>
 </template>
 <script>
 // import child from './child'
@@ -862,8 +896,8 @@ export default {
     changeCount (val) {
       console.log('change parent')
     },
-    paly () {
-      console.log()
+    paly (val) {
+      console.log('paly', val)
     }
   }
 }
@@ -874,8 +908,10 @@ export default {
 
 ```html
 <template>
-  子组件： {{count}}<br>
-  <grand-child @click="$dispatch('play', 'parent', 'ball')"></grand-child>
+  <div>
+    子组件： {{count}}<br>
+    <grand-child @click="$dispatch('play', 'parent', 'ball')" @eat="eat"></grand-child>
+  </div>
 </template>
 <script>
 import grandChild from './grand-child'
@@ -884,6 +920,11 @@ export default {
   components: {grandChild},
   props: {
     count: {}
+  },
+  methods: {
+    eat (val) {
+      console.log('eat', val)
+    }
   }
 }
 </script>
@@ -892,8 +933,10 @@ export default {
 二级组件 `grand-child.vue`
 ```html
 <template>
-  二级组件：{{parent.count}} <br>
-  <button @click="$parent.$emit('change-count')">触发child的事件</button>
+  <div>
+    二级组件：{{parent.count}} <br>
+    <button @click="$parent.$emit('change-count')" @eat="eat">触发child的事件</button>
+  </div>
 </template>
 <script>
 export default {
@@ -901,6 +944,11 @@ export default {
   inject: ['parent']
   props: {
     count: {}
+  },
+  methods: {
+    eat(val) {
+      console.log('grand-child eat', val)
+    }
   }
 }
 </script>
@@ -923,9 +971,236 @@ Vue.prototype.$dispatch = function (eventName, componentName, value) {
     parent = parent.$parent
   }
 }
+// 向下通知某个组件 进行触发事件
+Vue.prototype.$broadcast = function (eventName, componentName, value) {
+  // 需要找到所有组件进行触发
+  let children = this.$children
+  function broadcast (children) {
+    for (let i = 0; i < children.length; i++) {
+      let child = children[i]
+      if (componentName === child.$options.name) { // 找到同名组件
+        child.$emit(eventName, value)
+        return
+      } else {
+        if (child.$children) {
+          broadcast(child.$children)
+        }
+      }
+    }
+  }
+  broadcast(children)
+}
 ```
-  - 平级组件通信
 
+-------------
 
+使用$attrs $listeners
+
+App.vue
+```html
+<template>
+  <div>
+    <Test a="1" b="2" c="3" d="4" @handleDown="handleDown"></Test>
+  </div>
+</template>
+<script>
+import Test from './component/test'
+export default {
+  components: {Test},
+  data () {
+    return { msg: 'hello' }
+  },
+  methods: {
+    handleDown() {
+      console.log('handleDown')
+    }
+  }
+}
+</script>
+```
+test.vue
+```html
+<template>
+  <div>
+    {{$attrs}}
+    <!-- 将所有属性都传递给子组件 -->
+    <!-- <A v-bind="$attrs"></A> -->
+    <!-- 相当于 { ...obj } -->
+    <!-- <A v-bind="{a: 1, b: 2, c: 3}"></A> -->
+    <!-- <A @click="handleClick" @mouse-down="mouseDown"></A> -->
+    <A v-on="$listeners" v-bind="$attrs"></A> 
+  </div>
+</template>
+<script>
+import A from './a.vue'
+// 这个组件是过渡的 它不需要使用这些属性
+// 如果在props里引用了 $attr就会减少
+// $attr 是响应式的 父组件数据变了 数据也会随着更新
+export default {
+  inheritAttrs: false, // 设置属性不增加到dom元素上
+  props: ['a', 'b'], // $attr 会减少 a b
+  components: {A},
+  methods: {
+    handleClick () {
+      console.log('handleClick')
+    },
+    mouseDown () {
+      console.log('mouseDown')
+    }
+  }
+}
+</script>
+```
+a.vue
+```html
+<template>
+  <div>
+    {{$attrs}}
+    <!-- <button @click="$listeners.handleClick">调用父组件事件方法</button> -->
+    <button @click="$listeners.handleClick">调用App.vue组件事件方法</button>
+  </div>
+</template>
+<script>
+export default {
+  mounted () {
+    console.log(this.$listeners)
+  }
+}
+</script>
+```
+-------------
+
+使用`$refs`
+
+App.vue
+```html
+<template>
+  <div>
+    <dialog ref="dialog"></dialog>
+    <button @click="change"></button>
+  </div>
+</template>
+<script>
+import dialog from './components/dialog.vue'
+export default {
+  components: {dialog},
+  data () {
+    return {
+
+    }
+  },
+  methods: {
+    change () {
+      // 可以获取当前dialog中任何属性 但不建议直接通过这种方式去改变组件的属性
+      // ref的用法 在普通元素上 可以获取dom元素 如果是 v-for 里面 获取的是一组dom 或 当前组件实例
+      this.$refs.dialog.handleChange()
+    }
+  }
+}
+</script>
+```
+dialog.vue
+```html
+<template>
+  <div>
+
+  </div>
+</template>
+<script>
+export default {
+  name: 'dialog',
+  methods: {
+    handleChange () {
+      console.log('handleChange')
+    }
+  }
+}
+</script>
+```
+
+3. 平级组件通信
+
+eventBus
+
+main.js
+```js
+import Vue from 'vue'
+import App from './App'
+// 绑定事件和触发事件 需要在同一个实例上
+// 每个vue实例都具备 $on $emit $off 
+Vue.prototype.$bus = new Vue() 
+
+new Vue({
+  el: 'app',
+  render: h => h(App)
+})
+```
+App.vue
+```html
+<template>
+  <div>
+    <!-- 旧版本写法 -->
+    <!-- <div slot="header"></div>
+    <div slot="footer" slot-scope="{names}">{{names}}</div> -->
+    <dialog>
+      <template #header>{{msg}}</template>
+      <!-- 作用域插槽 希望用当前组件的数据 只能采用作用域插槽将数据传递出来-->
+      <template v-slot:footer="{isShow, names}">footer {{isShow}} {{names}}</template>
+    </dialog>
+  </div>
+</template>
+<script>
+import dialog from './components/dialog.vue'
+export default {
+  components: {dialog},
+  mounted () {
+    this.$bus.$emit('toChange', 'hello')
+  },
+  data () {
+    return {
+      msg: 'hello'
+    }
+  },
+  methods: {
+
+  }
+}
+</script>
+```
+dialog.vue
+```html
+<template>
+  <div>
+    <slot name="header"><slot>
+    <div>aaaa</div>
+    <slot name="footer" :isShow="isShow" names="弹窗组件插槽"><slot>
+  </div>
+</template>
+<script>
+export default {
+  name: 'dialog',
+  data () {
+    return {
+      isShow: false
+    }
+  },
+  mounted () {
+    // {'监听事件', [fn]}
+    this.$bus.$on('toChange', function (val) {
+      console.log(val)
+    })
+  },
+  methods: {
+    handleChange () {
+      console.log('handleChange')
+    }
+  }
+}
+</script>
+```
+
+- 子组件如何监听父组件的`mounted`事件？
+  
+  组件挂载的顺序是先挂载父组件 -> 渲染子组件 -> 子组件mounted -> 父组件mounted  
 
 注意： 在子组件里不要直接修改父组件的数据
