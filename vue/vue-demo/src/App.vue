@@ -1,12 +1,12 @@
 <template>
   <div id="app">
-    <ul>
+    <ol>
       <li v-for="rl of routerList"
           :key="rl.router">
         <a @click="toRouter(rl.router)"
            class="list">{{rl.label}}</a>
       </li>
-    </ul>
+    </ol>
     <router-view />
   </div>
 </template>
@@ -28,6 +28,10 @@
           {
             label: 'vue表单组件',
             router: '/vue-form'
+          },
+          {
+            label: 'menu组件',
+            router: '/vue-menu'
           }
         ]
       }
