@@ -16,6 +16,7 @@
     name: 'App',
     data () {
       return {
+        imgs: [],
         routerList: [
           {
             label: 'vue组件通信',
@@ -32,6 +33,10 @@
           {
             label: 'menu组件',
             router: '/vue-menu'
+          },
+          {
+            label: '图片懒加载',
+            router: '/vue-lazyload'
           }
         ]
       }
