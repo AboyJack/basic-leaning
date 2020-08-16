@@ -31,7 +31,7 @@ function Promise (executor) {
   }
 }
 /**
- * 
+ * 这个方法要兼容别人的promise
  * @param {*} promise2 当前then返回的promise
  * @param {*} x 当前then中成功或者失败回调返回的结果
  * @param {*} resolve 成功返回
@@ -46,10 +46,13 @@ function resolvePromise (promise2, x, resolve, reject) {
   }
   // 判断x 有可能是个promise
   if (x !== null && (typeof x === 'object' || typeof x === 'function')) {
+    let called;
     try { // 有可能取then报错
       let then = x.then; // 看当前的promise有没有then方法 有 说明x是promise
       if (typeof then === 'function') { // 判断是promise
         then.call(x, y => {
+          if (called) return; // 这个判断为了防止调用失败 又调用成功
+          called = true;
           // resolve(y);
           // 如果返回的是一个promise 这个promise resolve的结果可能还是一个promise 
           // 所以递归解析知道这个y是一个常量为止
@@ -61,6 +64,8 @@ function resolvePromise (promise2, x, resolve, reject) {
         resolve(x);
       }
     } catch (e) { // 这个then方法 是通过Object.defineProperty定义的
+      if (called) return; // 为了防止出错后 继续调用成功逻辑
+      called = true;
       reject(e);
     }
   } else { // x是普通常量
@@ -69,6 +74,9 @@ function resolvePromise (promise2, x, resolve, reject) {
 }
 // onfulfilled, onrejected 这两个方法必须异步执行then 方法是异步的
 Promise.prototype.then = function (onfulfilled, onrejected) {
+  // 值的穿透 参数的可选
+  onfulfilled = typeof onfulfilled === 'function' ? onfulfilled : val => { throw val }
+  onrejected = typeof onrejected === 'function' ? onrejected : err => { throw err }
   let _self = this;
   // 每个promise必须返回一个新的状态 保证可以链式调用
   // 返回新的promise 让当前的then方法执行后可以继续then
@@ -119,5 +127,18 @@ Promise.prototype.then = function (onfulfilled, onrejected) {
   });
   return promise2;
 }
-
+/*
+测试 promise是否符合promise a+ 规范
+安装包
+npm i promises-aplus-tests -g
+promises-aplus-tests promise.js
+*/
+Promise.deferred = function () {
+  let dfd = {};
+  dfd.promise = new Promise((resolve, reject) => {
+    dfd.resolve = resolve;
+    dfd.reject = reject;
+  });
+  return dfd;
+}
 module.exports = Promise
