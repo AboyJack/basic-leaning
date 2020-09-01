@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>canvasTable</title>
+</head>
+
+<body>
+  <div id="app">
+    <canvas id="canvasTable"></canvas>
+  </div>
+  <script>
+    (function () {
+      var canvas = document.querySelector('#canvasTable');
+      var ctx = canvas.getContext('2d');
+
+      canvas.width = 500;
+      canvas.height = 500;
+      canvas.style.border = '1px solid #9571E9';
+
+      //定义每个小格的宽高
+      var rectH = 20;
+      var rectW = 50;
+      //绘制横线
+      for (var i = 0; i < canvas.height / rectH; i++) {
+        console.log(ctx)
+        ctx.moveTo(0, i * rectH);
+        ctx.lineTo(canvas.width, i * rectH);
+      }
+      //绘制竖线
+      for (var j = 0; j < canvas.width / rectW; j++) {
+        ctx.moveTo(j * rectW, 0);
+        ctx.lineTo(j * rectW, canvas.height);
+      }
+      ctx.lineWidth = 2;
+      // ctx.strokeStyle = '#dcdae2';
+      ctx.shadowOffsetX = 0
+      ctx.shadowOffsetY = 0
+      ctx.shadowBlur = 0
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.1)'
+      ctx.stroke();
+    })()
+  </script>
+</body>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  #app {
+    text-align: center;
+    align-self: center;
+  }
+</style>
+
+</html>
