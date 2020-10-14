@@ -1,22 +1,37 @@
 <template>
   <div id="app">
+<<<<<<< HEAD
     <ul>
+=======
+    <ol>
+>>>>>>> 338665cc724177ca023dbcfee2c83d4ac5918384
       <li v-for="rl of routerList"
           :key="rl.router">
         <a @click="toRouter(rl.router)"
            class="list">{{rl.label}}</a>
       </li>
+<<<<<<< HEAD
     </ul>
+=======
+    </ol>
+>>>>>>> 338665cc724177ca023dbcfee2c83d4ac5918384
     <router-view />
   </div>
 </template>
 
 <script>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 338665cc724177ca023dbcfee2c83d4ac5918384
   export default {
     name: 'App',
     data () {
       return {
+<<<<<<< HEAD
+=======
+        imgs: [],
+>>>>>>> 338665cc724177ca023dbcfee2c83d4ac5918384
         routerList: [
           {
             label: 'vue组件通信',
@@ -25,6 +40,21 @@
           {
             label: 'vue中jsx的语法',
             router: '/vue-jsx'
+<<<<<<< HEAD
+=======
+          },
+          {
+            label: 'vue表单组件',
+            router: '/vue-form'
+          },
+          {
+            label: 'menu组件',
+            router: '/vue-menu'
+          },
+          {
+            label: '图片懒加载',
+            router: '/vue-lazyload'
+>>>>>>> 338665cc724177ca023dbcfee2c83d4ac5918384
           }
         ]
       }
